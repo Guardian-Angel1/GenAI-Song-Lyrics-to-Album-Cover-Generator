@@ -105,8 +105,8 @@ The frontend (Streamlit) talks to the backend (FastAPI) over HTTP on localhost. 
 
 ```bash
 # Clone the repo
-git clone <your-repo-url>
-cd <repo-folder>
+git clone https://github.com/Guardian-Angel1/GenAI-Song-Lyrics-to-Album-Cover-Generator.git
+cd <folder>
 
 # Create and activate a virtual environment
 python -m venv venv
