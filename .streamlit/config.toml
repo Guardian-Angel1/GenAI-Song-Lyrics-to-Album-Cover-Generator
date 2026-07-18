@@ -1,0 +1,14 @@
+[logger]
+level = "info"
+
+[server]
+# Exclude problematic directories from file watcher to prevent torch errors
+folderWatchBlacklist = ["songai", ".git", "__pycache__", ".pytest_cache", ".venv", "venv"]
+maxUploadSize = 1000
+
+[theme]
+primaryColor = "#FF6B6B"
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#161B22"
+textColor = "#C9D1D9"
+font = "sans serif"
