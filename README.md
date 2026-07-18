@@ -1,440 +1,234 @@
-# Song-to-Album Cover Generator
+# 🎨 Song-to-Album Cover Generator
 
-A multimodal GenAI project that generates creative album cover concepts from audio and lyrics using state-of-the-art diffusion models and transformers.
+Generate album cover art from song lyrics and/or audio using audio feature extraction, NLP-based lyric analysis, and Stable Diffusion image generation.
 
-## Project Overview
-
-Song-to-Album Cover Generator combines audio analysis, NLP sentiment analysis, and image generation to create artistic album covers from musical input. The system analyzes musical features (tempo, energy, mood) and lyrical themes to craft detailed prompts for a lightweight diffusion model, resulting in high-quality album artwork generated in 10-20 seconds.
-
-### System Capabilities
-
-- Audio Analysis: Extract tempo, energy, spectral texture, and mood from MP3/WAV files
-- Lyrics Analysis: Sentiment analysis, theme detection, and semantic embeddings
-- Prompt Generation: Combine audio and lyrical insights into detailed image prompts
-- Fast Generation: 10-20 seconds per image on GPU, optimized for consumer hardware
-- Customizable Parameters: Adjust art style, mood, colors, lighting, and generation parameters
-- Output Export: High-quality PNG album covers
+![Python](https://img.shields.io/badge/python-3.10-blue)
+![Streamlit](https://img.shields.io/badge/frontend-Streamlit-ff4b4b)
+![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688)
+![Status](https://img.shields.io/badge/status-working%20locally-brightgreen)
 
 ---
 
-## Quick Start
+## Overview
 
-### Prerequisites
-- Python 3.9+
-- 4GB RAM minimum (GPU recommended for speed)
-- Internet connection (first run downloads ~3.5GB model)
+This project was built for **DA 627 – Building Multimodal GenAI Systems**. It takes song lyrics (required) and audio (optional) as input, extracts musical and lyrical features, turns them into a structured text prompt, and feeds that prompt into a lightweight diffusion model to generate album cover artwork — all through a simple Streamlit UI.
 
-### Installation & Running
+A full write-up of the design and results is available in [`Report_Prakhar_Punj_220150011.pdf`](./Report_Prakhar_Punj_220150011.pdf).
 
-**Step 1: Setup Environment**
-```bash
-# Navigate to project
-cd "d:\CPi\8th Sem\DA 627 Building Multimodal GenAI\Course Project\Course Project"
+## Table of Contents
 
-# Create virtual environment
-python -m venv venv
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Running the App](#running-the-app)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Performance](#performance)
+- [Troubleshooting](#troubleshooting)
+- [Roadmap](#roadmap)
+- [Acknowledgments](#acknowledgments)
+- [License](#license)
 
-# Activate it
-venv\Scripts\activate
-```
+## Features
 
-**Step 2: Install Dependencies**
-```bash
-pip install -r requirements.txt
-```
+- 🎧 **Audio analysis** — tempo, energy, spectral texture, and mood extraction via Librosa
+- 📝 **Lyrics analysis** — sentiment classification and theme/keyword extraction
+- 🧠 **Automatic prompt construction** — combines audio + lyrics insights into a single diffusion prompt
+- 🖼️ **Fast image generation** — lightweight diffusion model, tuned for consumer GPUs
+- 🎛️ **Adjustable parameters** — art style, mood intensity, color temperature, lighting, guidance scale, and number of variations
+- 💾 **PNG export** of generated covers
 
-**Step 3: (GPU Users Only) Install PyTorch with CUDA**
-```bash
-# Check GPU:
-nvidia-smi
-
-# If you have NVIDIA GPU, reinstall PyTorch:
-pip uninstall torch torchvision torchaudio -y
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-```
-
-**Step 4: Run the Application**
-```bash
-streamlit run app.py --server.fileWatcherType none
-```
-
-The application opens at `http://localhost:8501`
-
----
-
-## Usage Instructions
-
-### Web Interface
-
-The Streamlit interface provides controls for album cover generation:
-
-1. **Lyrics Input** (required)
-   - Text field for song lyrics (2-4 lines recommended)
-
-2. **Audio Upload** (optional)
-   - Accepts WAV or MP3 audio files
-   - System automatically extracts tempo, energy, and mood
-
-3. **Generation Parameters**
-   - Art Style: Realistic, Anime, Cyberpunk, Abstract, Vintage, Minimalist
-   - Mood Intensity: 0.0 to 1.0 scale
-   - Color Temperature: Warm, Cool, Neon, Monochrome
-   - Lighting Style: Dark, Bright, Sunset, Night
-   - Guidance Scale: 1.0 to 15.0 (default: 7.0)
-   - Variations: 1 to 4 images per generation
-
-4. **Generation Process**
-   - Typical generation time: 10-20 seconds (GPU), 30-120 seconds (CPU)
-   - Progress indicator displays during processing
-
-5. **Output Management**
-   - Generated images available for download as PNG files
-   - Metadata and analysis data provided for reference
-
----
-
-## AI Model Specifications
-
-### Image Generation Model: **SSD-1B (Segmind's Stable Diffusion 1B)**
-
-The project uses **SSD-1B**, a distilled variant of Stable Diffusion specifically optimized for speed and efficiency.
-
-#### Technical Specifications
-- **Model Size:** 3.5 GB (vs 7GB for Stable Diffusion v1.5)
-- **Architecture:** Distilled from Stable Diffusion 2.1
-- **Inference Steps:** 16 steps (vs 30-50 in standard SD)
-- **Precision:** float16 on GPU, float32 on CPU
-- **VRAM Usage:** ~3-4 GB on GPU
-- **Generation Speed:** 10-20 seconds per 512×512 image on RTX 3050+
-
-#### Why SSD-1B > Other Models
-
-| Aspect | SSD-1B | SD v1.5 | SD v2.1 | SD XL |
-|--------|--------|---------|---------|-------|
-| **Model Size** | 3.5 GB | 4-7 GB | 5-7 GB | 6-7 GB |
-| **Speed** | Fast | Medium | Slow | Very Slow |
-| **Quality** | Very Good | Good | Very Good | Excellent |
-| **VRAM (GPU)** | 3-4 GB | 6-8 GB | 6-8 GB | 8-10 GB |
-| **Best For** | **Fast, Consumer GPUs** | Legacy | High-quality | Enterprise |
-
-**SSD-1B Selection Rationale:**
-1. Optimized model architecture for computational efficiency
-2. Quality improvements over Stable Diffusion v1.5 through Stable Diffusion 2.1 foundation
-3. Consumer GPU compatibility with 4GB VRAM requirements
-4. 16 inference steps sufficient with modern scheduler implementations
-5. Optimal balance between generation speed and output quality
-
-### Text Analysis Models
-
-#### Sentiment Analysis: **DistilBERT** (distilbert-base-uncased-finetuned-sst-2-english)
-- Lightweight BERT variant, 40% smaller than BERT
-- Fast sentiment classification (positive/negative/neutral)
-- Pre-trained on SST-2 sentiment corpus
-
-#### Embeddings: **Sentence-Transformers MiniLM** (sentence-transformers/all-MiniLM-L6-v2)
-- 33M parameters (efficient for CPU)
-- Semantic similarity for theme extraction
-- Pre-trained on 215M sentence pairs
-
-#### Audio Analysis: **Librosa**
-- Open-source audio processing library
-- Fast feature extraction: tempo, energy, spectral centroid, zero-crossing rate
-- No ML model required - signal processing based
-
----
-
-## Performance Metrics
-
-### Generation Times (512×512 images, 16 steps)
-
-| Hardware | Time | Speed |
-|----------|------|-------|
-| **RTX 3050 (4GB)** | 12-18s | Fast |
-| **RTX 3060 (12GB)** | 8-12s | Fast |
-| **RTX 3080 (10GB)** | 5-8s | Very Fast |
-| **CPU (i7/i9)** | 60-120s | Slow |
-
-### Memory Usage
-
-- **Model Loading:** ~3.5 GB
-- **Generation:** ~0.5-1.0 GB additional
-- **Total Needed:** 4 GB minimum (GPU), 8 GB recommended (RAM for CPU)
-
----
-
-## System Architecture
+## How It Works
 
 ```
-┌─────────────────────────────────────────┐
-│        Streamlit Frontend (UI)          │
-│  • File upload, sliders, text inputs    │
-│  • Real-time visualization              │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│      FastAPI Backend (Optional)         │
-│  • Handles requests & file processing   │
-│  • Enables multi-user support           │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│     Audio Processing (librosa)          │
-│  • Extract: tempo, energy, mood         │
-│  • Output: AudioAnalysisResult          │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│   Lyrics Processing (Transformers)      │
-│  • Sentiment analysis (DistilBERT)      │
-│  • Theme extraction & embeddings        │
-│  • Output: LyricsAnalysisResult         │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│   Prompt Generation (Rule-based)        │
-│  • Combine insights into detailed prompt│
-│  • Apply style/mood/color preferences   │
-│  • Output: Structured prompt text       │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│   Image Generation (SSD-1B Diffusion)   │
-│  • 16 inference steps                   │
-│  • GPU-optimized with xFormers          │
-│  • Output: 512×512 PNG images           │
-└─────────────────────────────────────────┘
+Lyrics (required) + Audio (optional)
+            │
+            ▼
+  ┌───────────────────────┐
+  │   Audio Processing     │  Librosa → tempo, energy, mood
+  └───────────────────────┘
+            │
+  ┌───────────────────────┐
+  │  Lyrics Processing      │  DistilBERT (sentiment) + MiniLM (embeddings)
+  └───────────────────────┘
+            │
+  ┌───────────────────────┐
+  │   Prompt Generator      │  Combines insights + UI params into a prompt
+  └───────────────────────┘
+            │
+  ┌───────────────────────┐
+  │   Image Generator       │  Diffusers pipeline → album cover (PNG)
+  └───────────────────────┘
 ```
 
----
+The frontend (Streamlit) talks to the backend (FastAPI) over HTTP on localhost. If the backend isn't reachable, the frontend falls back to running the generation pipeline in-process.
+
+### Models used
+
+| Component | Model | Notes |
+|---|---|---|
+| Image generation | [`nota-ai/bk-sdm-small`](https://huggingface.co/nota-ai/bk-sdm-small) (default) | ~2.4 GB, swappable via `SD_MODEL_ID` env var for higher-quality/heavier models |
+| Sentiment analysis | `distilbert-base-uncased-finetuned-sst-2-english` | Lightweight BERT variant |
+| Text embeddings | `sentence-transformers/all-MiniLM-L6-v2` | 33M params, used for theme/semantic extraction |
+| Audio features | Librosa | Signal-processing based, no model download needed |
+
+> The default generation model is optimized for low-VRAM GPUs (tested on an RTX 3050, 4 GB VRAM). You can point `SD_MODEL_ID` at a larger model if you have more VRAM to spare.
 
 ## Project Structure
 
 ```
-Course Project/
+.
+├── app.py                   # Thin entrypoint wrapper (calls frontend.app.main)
+├── check_gpu.py              # GPU/CUDA diagnostics script
+├── requirements.txt           # Python dependencies
+├── .streamlit/                # Streamlit configuration
 ├── backend/
-│   ├── __init__.py
-│   ├── main.py                 # FastAPI application & endpoints
-│   ├── audio_processing.py     # Librosa-based audio analysis
-│   ├── lyrics_processing.py    # DistilBERT sentiment & embeddings
-│   ├── prompt_generator.py     # Combine insights into prompts
-│   └── image_generator.py      # SSD-1B diffusion pipeline
-├── frontend/
-│   ├── __init__.py
-│   └── app.py                  # Streamlit UI
-├── app.py                      # Entry point
-├── check_gpu.py                # GPU diagnostics script
-├── requirements.txt            # Python dependencies
-├── README.md                   # This file
-├── GPU_SETUP.md               # GPU configuration guide
-├── SETUP_GUIDE.md             # Detailed setup instructions
-├── QUICK_START.md             # 2-minute quick start
-├── OPTIMIZATION_SUMMARY.md    # Performance optimization details
-├── MODEL_ALTERNATIVES.md      # Alternative model information
-└── PROJECT_REPORT.md          # Comprehensive project report
+│   ├── main.py                # FastAPI app: /health, /generate, pipeline orchestration
+│   ├── audio_processing.py    # Librosa-based feature extraction
+│   ├── lyrics_processing.py   # Sentiment analysis + theme/keyword extraction
+│   ├── prompt_generator.py    # Combines audio + lyrics insight into a prompt
+│   └── image_generator.py     # Diffusers pipeline wrapper
+└── frontend/
+    └── app.py                 # Streamlit UI
 ```
 
----
+## Getting Started
 
-## Advanced Configuration
+### Prerequisites
 
-### Custom Model Configuration
+- Python 3.10
+- ~3–5 GB free disk space (first run downloads the diffusion model)
+- NVIDIA GPU with CUDA recommended for fast generation (works on CPU too, just slower)
 
-Alternative models can be specified via environment variables:
+### Installation
+
 ```bash
-export SD_MODEL_ID="dreamshaper-8"
-streamlit run app.py
+# Clone the repo
+git clone <your-repo-url>
+cd <repo-folder>
+
+# Create and activate a virtual environment
+python -m venv venv
+venv\Scripts\activate        # Windows
+source venv/bin/activate     # macOS/Linux
+
+# Install dependencies
+pip install -r requirements.txt
 ```
-Note: Custom models must be compatible with Hugging Face Diffusers format.
 
-### GPU Diagnostics and Verification
+### GPU setup (optional but recommended)
 
-System diagnostic information can be obtained:
+`requirements.txt` pulls a CPU-only build of PyTorch by default on Windows. To enable GPU acceleration:
+
+```bash
+# Check your GPU and driver
+nvidia-smi
+
+# Reinstall PyTorch with a CUDA build matching your driver
+pip uninstall torch torchaudio -y
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
+```
+
+Adjust the `cu124` suffix (`cu118`, `cu121`, `cu126`, etc.) to match the CUDA version your GPU driver supports. Verify with:
+
+```bash
+python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+```
+
+Or simply run:
+
 ```bash
 python check_gpu.py
 ```
-Provides VRAM availability, CUDA version, GPU capabilities, and configuration recommendations.
 
-### Multiple Variations
+## Running the App
 
-Multiple variations can be requested for comparison:
-- Two variations: approximately 20-40 seconds generation time
-- Four variations: approximately 40-80 seconds generation time
-- Guidance scale parameter controls output detail level (recommended range: 7-15)
+The backend and frontend run as two separate processes. **Both must be launched from the project root** (not from inside `backend/` or `frontend/`), since imports are package-style (`from backend.xxx import yyy`).
 
-### Deterministic Generation
-
-Repeatability can be achieved by specifying a seed value:
-- Identical seed and input parameters produce identical output
-- Useful for testing and consistency verification
-
----
-
-## Model Selection Justification
-
-### Why Not Use Other Models?
-
-**Stable Diffusion v1.5**
-- Requires 30+ inference steps
-- Model size: 7GB (vs 3.5GB for SSD-1B)
-- Not optimized for consumer hardware with limited VRAM
-
-**Stable Diffusion XL**
-- Very large model (6-7GB)
-- Slow performance on consumer GPUs
-- Designed for high-end systems
-
-**Leonardo Diffusion**
-- Closed-source implementation
-- API-based access requiring subscription
-
-**LocalDiffusion / TinySD**
-- Limited quality output
-- Insufficient for professional album cover generation
-
-**SSD-1B (Selected Model)**
-- Optimal balance of speed and quality
-- Optimized for consumer GPU hardware
-- Based on improved Stable Diffusion 2.1 architecture
-- 3.5GB model size (manageable on 4GB VRAM systems)
-- 16-step generation sufficient for high-quality output
-- Best suited for album cover generation requirements
-
----
-
-## Generation Workflow
-
-```
-1. Lyrics Input
-   Input: "Dancing in the night, feeling so alive"
-   
-2. Audio Feature Analysis (Optional)
-   Tempo: 120 BPM
-   Energy Level: 0.75
-   Detected Mood: Happy
-   
-3. Lyrics Semantic Analysis
-   Sentiment Classification: Positive
-   Detected Themes: Party, Dance, Joy
-   Key Terms: Dancing, Night, Alive, Feeling
-   
-4. Prompt Composition
-   Synthesized Prompt: "Emotionally expressive album cover, happy mood
-   atmosphere, realistic composition, cool color palette, bright lighting,
-   fast tempo, high energy, dance party theme"
-   
-5. Image Generation
-   Model: SSD-1B Diffusion
-   Steps: 16
-   Output Resolution: 512×512 pixels
-   Format: PNG
-   
-6. Final Deliverables
-   Generated album cover image
-   Generation prompt documentation
-   Processing metadata
+**Terminal 1 — backend:**
+```bash
+venv\Scripts\activate
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
----
+**Terminal 2 — frontend:**
+```bash
+venv\Scripts\activate
+streamlit run frontend/app.py
+```
 
-## Performance Optimizations
+- Backend: `http://127.0.0.1:8000`
+- Frontend: `http://localhost:8501`
 
-1. Model Distillation: SSD-1B architecture provides reduced computational requirements
-2. Inference Steps: Configured to 16 steps for optimal convergence
-3. Precision: Float16 on GPU for reduced memory consumption
-4. Memory Optimization: Attention slicing and VAE slicing for consumer hardware
-5. Lightweight NLP: DistilBERT for efficient sentiment analysis
-6. Efficient Embeddings: MiniLM for semantic representation
+If the backend isn't running, the frontend will still work by falling back to a local (in-process) pipeline call.
 
----
+## Usage
+
+1. **Enter lyrics** (required) — a few lines work best
+2. **Upload audio** (optional, WAV/MP3) — tempo, energy, and mood are auto-detected
+3. **Tune generation parameters:**
+   - Art style: Realistic, Anime, Cyberpunk, Abstract, Vintage, Minimalist
+   - Mood intensity: 0.0–1.0
+   - Color temperature: Warm, Cool, Neon, Monochrome
+   - Lighting: Dark, Bright, Sunset, Night
+   - Guidance scale: 1.0–15.0 (default 7.0; 8–9 gives tighter prompt adherence, avoid going much above ~12–13)
+   - Variations: 1–4 (capped at 2 on GPU to stay within a 4 GB VRAM budget)
+4. **Generate** and download the resulting PNG(s)
+
+## Configuration
+
+Override the default diffusion model via environment variable:
+
+```bash
+export SD_MODEL_ID="runwayml/stable-diffusion-v1-5"   # or another Diffusers-compatible model
+streamlit run frontend/app.py
+```
+
+Larger models increase quality at the cost of speed and VRAM — check it fits your GPU's budget at your chosen resolution/variation count.
+
+## Performance
+
+| Hardware | Time (1 image, 512×512) |
+|---|---|
+| CPU (i7/i9) | ~90–120s |
+| RTX 3050 (4 GB) | ~15–20s (expected) |
+| Higher-end GPUs | Faster, roughly scaling with VRAM/compute |
+
+CPU timing above is measured directly; GPU timing is the expected range for this hardware class and may vary based on driver/CUDA setup.
 
 ## Troubleshooting
 
-### Generation Failure
-If generation process fails:
-1. Reduce number of variations to 1
-2. Lower guidance scale to 7.0
-3. Restart application
-4. Clear model cache: `Remove-Item -Recurse $env:USERPROFILE\.cache\huggingface`
+**`ModuleNotFoundError: No module named 'backend'`**
+You likely ran a command from inside `backend/` or `frontend/`. Always run from the project root.
 
-### GPU Detection Issues
-If GPU is not detected:
-```bash
-python check_gpu.py
-```
-If GPU is available but not detected, reinstall PyTorch with CUDA support:
-```bash
-pip uninstall torch -y
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-```
+**Backend seems to do nothing when started**
+Use `python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload` — there's no bare `python backend/main.py` entrypoint.
 
-### Slow Generation Performance
-If generation is slower than expected:
-- Verify GPU utilization: `nvidia-smi`
-- Close competing GPU-intensive applications
-- Confirm PyTorch GPU support installation
+**Frontend says "FastAPI backend is not running and local import failed"**
+Make sure the backend is started first (from the project root), then start the frontend (also from the project root).
 
-### Memory Constraints
-If out-of-memory errors occur:
-- Reduce number of image variations
-- Lower guidance scale parameter
-- Use CPU processing (slower but requires less VRAM)
+**GPU not detected**
+Run `python check_gpu.py`. If a GPU is present but not detected, your `torch` install is likely CPU-only — see [GPU setup](#gpu-setup-optional-but-recommended) above.
 
----
+**Slow generation despite having a GPU**
+Confirm GPU utilization with `nvidia-smi`, close other GPU-heavy applications, and re-verify `torch.cuda.is_available()`.
 
-## Supporting Documentation
+**Cosmetic startup warning about `torch.classes`**
+A harmless interaction between Streamlit's file watcher and PyTorch internals. Safe to ignore, or suppress with `streamlit run frontend/app.py --server.fileWatcherType none`.
 
-- **GPU_SETUP.md** - GPU configuration and installation procedures
-- **SETUP_GUIDE.md** - Detailed system setup instructions
-- **QUICK_START.md** - Quick reference guide
-- **OPTIMIZATION_SUMMARY.md** - Performance optimization details
-- **MODEL_ALTERNATIVES.md** - Comparison of alternative model options
-- **PROJECT_REPORT.md** - Comprehensive technical project documentation
+## Roadmap
 
----
-
-## Software Dependencies
-
-Primary dependencies:
-- PyTorch 2.0+ - Deep learning framework
-- Diffusers 0.32+ - Diffusion model library
-- Transformers 4.48+ - NLP model implementations
-- Sentence-Transformers - Semantic embedding models
-- Librosa 0.10+ - Audio signal processing
-- Streamlit 1.42+ - Web application framework
-- FastAPI 0.115+ - REST API framework (optional)
-
----
-
-## Planned Enhancements
-
-- Genre classification from audio analysis
-- Multi-language lyrics support
-- Real-time audio stream input processing
-- Text overlay and typography customization
-- Generation history database and metadata storage
-- Batch processing for multiple songs
-- Music platform integration (Spotify, SoundCloud)
-- Support for additional diffusion models
-- Advanced prompt refinement using language models
-
----
+- [ ] Genre classification from audio
+- [ ] Multi-language lyrics support
+- [ ] Text overlay / typography customization on generated covers
+- [ ] Generation history and metadata storage
+- [ ] Batch processing for multiple songs
+- [ ] Deployment (e.g., single-process Hugging Face Spaces build)
 
 ## Acknowledgments
 
-- Streamlit - Web application framework
-- Hugging Face Diffusers - Diffusion model implementations
-- SSD-1B Model - Segmind Stable Diffusion 1B
-- Librosa - Audio processing library
-- PyTorch - Deep learning framework
-
----
-
-## Support and Diagnostics
-
-For technical issues:
-1. Consult the Troubleshooting section in this document
-2. Review GPU_SETUP.md for GPU-specific configuration
-3. Execute `python check_gpu.py` for system diagnostics
-4. Review terminal output and logs for detailed error information
-
-
+- [Streamlit](https://streamlit.io/) — web app framework
+- [Hugging Face Diffusers](https://github.com/huggingface/diffusers) — diffusion model pipeline
+- [Librosa](https://librosa.org/) — audio processing
+- [PyTorch](https://pytorch.org/) — deep learning framework
